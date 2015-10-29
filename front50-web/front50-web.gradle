@@ -16,6 +16,14 @@
 
 import com.netflix.spinnaker.SpinnakerProjectPlugin.JarFinder
 
+ext {
+  springConfigLocation = System.getProperty('spring.config.location', "${System.getProperty('user.home')}/.spinnaker/")
+}
+
+tasks.withType(org.springframework.boot.gradle.run.BootRunTask) {
+  systemProperty('spring.config.location', project.springConfigLocation)
+}
+
 buildscript {
   repositories {
     jcenter()
@@ -69,7 +77,11 @@ dependencies {
   compile spinnaker.dependency("kork")
 }
 
+applicationName = "front50"
 applicationDefaultJvmArgs = ["-Djava.security.egd=file:/dev/./urandom"]
+applicationDistribution.from(project.file('config')) {
+  into 'config'
+}
 
 ospackage {
   packageName = project.applicationName
@@ -81,10 +93,10 @@ ospackage {
 
 buildDeb {
   dependsOn installApp
-  requires("openjdk-8-jre")
 }
 
 bootRun {
   // jamm is required when using prepared statements with in-memory C*
-  jvmArgs "-javaagent:${project.configurations.compile.find { it.name.startsWith('jamm') }}"
+  def jamm = project.configurations.compile.find { it.name.startsWith('jamm') }
+  jvmArgs applicationDefaultJvmArgs.join(" ") + " -javaagent:${jamm}"
 }

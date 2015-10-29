@@ -178,21 +178,40 @@ class CassandraApplicationDAOSpec extends Specification {
     foundApplication."${attribute}" == value
 
     where:
-    attribute     | value
-    "email"       | "updated@netflix.com"
-    "description" | null
-    "pdApiKey"    | "another pdApiKey"
-    "repoProjectKey" | "project-key"
-    "repoSlug" | "repo"
-    "repoType" | "github"
+    attribute                        | value
+    "email"                          | "updated@netflix.com"
+    "description"                    | null
+    "pdApiKey"                       | "another pdApiKey"
+    "repoProjectKey"                 | "project-key"
+    "repoSlug"                       | "repo"
+    "repoType"                       | "github"
+    "cloudProviders"                 | "aws,titan"
+    "platformHealthOnly"             | "true"
+    "platformHealthOnlyShowOverride" | "false"
+
   }
 
   void "application updates should merge with existing details"() {
     given:
-    cassandraApplicationDAO.create(name, [name: name, email: email, owner: owner])
+    cassandraApplicationDAO.create(name, [
+        name: name,
+        email: email,
+        owner: owner,
+        repoType: repoType,
+        repoSlug: repoSlug,
+        cloudProviders: "aws,titan"
+    ])
 
     when:
-    cassandraApplicationDAO.update(name, [pdApiKey: pdApiKey, repoProjectKey: "project-key", repoSlug: "repo", repoType: "stash"])
+    cassandraApplicationDAO.update(name, [
+        pdApiKey: pdApiKey,
+        repoProjectKey: "project-key",
+        repoSlug: "repo",
+        repoType: "stash",
+        cloudProviders: "titan",
+        platformHealthOnly: "true",
+        platformHealthOnlyShowOverride: "true"
+    ])
 
     then:
     def foundApplication = cassandraApplicationDAO.findByName(name)
@@ -202,6 +221,9 @@ class CassandraApplicationDAOSpec extends Specification {
     foundApplication.repoProjectKey  == "project-key"
     foundApplication.repoSlug == "repo"
     foundApplication.repoType == "stash"
+    foundApplication.cloudProviders == cloudProviders
+    foundApplication.platformHealthOnly == "true"
+    foundApplication.platformHealthOnlyShowOverride == "true"
 
     where:
     name = "another-app"
@@ -211,6 +233,7 @@ class CassandraApplicationDAOSpec extends Specification {
     repoProjectKey = "project-key"
     repoSlug = "repo"
     repoType = "github"
+    cloudProviders = "titan"
   }
 }
 
